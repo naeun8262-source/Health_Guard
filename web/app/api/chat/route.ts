@@ -111,18 +111,18 @@ ${company_name ? `[수신처]\n${company_name} 현장소장 귀하\n` : ""}
   };
 
   try {
-    const result = streamText({
+    const result = await streamText({
       model: openai('gpt-4o-mini'),
-      system: `당신은 HDC 현대산업개발의 현장 안전을 돕는 최고 안전 책임자 AI입니다. 
-항상 프로페셔널하고 단호하며, 가독성 높고 정중한 어투를 사용하십시오.
-제공된 도구(search_safety_law, draft_warning_letter)를 적극 활용하여 현장 위반 상황에 대한 정확한 법적 기준을 안내하고 필요한 경우 경고 공문을 작성해주세요.
-도구를 사용한 후에는 사용자에게 결과를 깔끔하게 정리하여 보여주세요.`,
+      system: `당신은 HDC 현대산업개발의 현장 안전을 책임지는 최고 안전 책임자 AI입니다. 
+항상 프로페셔널하고 단호하며, 가독성 높고 정중한 말투를 사용하십시오.
+제공된 도구(search_safety_law, draft_warning_letter)를 적극 활용하여 현장 위반 상황에 대해 정확한 법적 기준을 안내하고 필요한 경우 경고 공문을 작성해주세요.
+도구의 내용은 표나 목록을 사용하여 결과를 깔끔하게 정리하여 보여주세요.`,
       messages,
       tools: aiTools,
       maxSteps: 5,
     } as any);
 
-    return result.toDataStreamResponse();
+    return result.toAIStreamResponse();
   } catch (error: any) {
     console.error("Chat API error:", error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
