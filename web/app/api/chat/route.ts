@@ -33,10 +33,28 @@ export async function POST(req: Request) {
     const { OpenAI } = await import('openai');
     const openaiClient = new OpenAI({ apiKey: openaiApiKey });
 
-    // 1. 사용자 질문으로 임베딩 생성
+    // 0. LLM을 통한 검색 쿼리 확장 (Query Expansion)
+    const expansionPrompt = `다음 사용자의 현장 위반 상황이나 질문에 대해, 산업안전보건법 및 관련 규칙에서 검색하기 좋은 핵심 키워드(예: 보호구, 안전모, 밀폐공간, 추락, 송기마스크 등)와 관련 조항 번호가 있다면 포함하여 1~2문장의 풍부한 검색용 자연어 쿼리로 확장해주세요.
+사용자 질문: "${userQuery}"
+검색 쿼리:`;
+
+    let expandedQuery = userQuery;
+    try {
+      const expansionResponse = await openaiClient.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: expansionPrompt }],
+        temperature: 0,
+      });
+      expandedQuery = expansionResponse.choices[0].message.content || userQuery;
+    } catch (e) {
+      console.warn("Query expansion failed, using original query", e);
+    }
+    console.log('[RAG] Expanded Query:', expandedQuery);
+
+    // 1. 확장된 쿼리로 임베딩 생성
     const embeddingResponse = await openaiClient.embeddings.create({
       model: "text-embedding-3-small",
-      input: userQuery,
+      input: expandedQuery,
     });
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
