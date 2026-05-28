@@ -124,6 +124,7 @@ ${company_name ? `[수신처]\n${company_name} 현장소장 귀하\n` : ""}
 도구를 사용한 후에는 사용자에게 결과를 깔끔하게 정리하여 보여주세요.`,
       messages,
       tools: aiTools,
+      maxSteps: 5,
     });
 
     return (result as any).toDataStreamResponse ? (result as any).toDataStreamResponse() : (result as any).toAIStreamResponse();
