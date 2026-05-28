@@ -125,9 +125,9 @@ ${company_name ? `[수신처]\n${company_name} 현장소장 귀하\n` : ""}
       messages,
       tools: aiTools,
       maxSteps: 5,
-    });
+    } as any);
 
-    return (result as any).toDataStreamResponse ? (result as any).toDataStreamResponse() : (result as any).toAIStreamResponse();
+    return (result as any).toUIMessageStreamResponse();
   } catch (error: any) {
     console.error("Chat API error:", error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
