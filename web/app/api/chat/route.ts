@@ -9,10 +9,14 @@ const supabaseKey = process.env.SUPABASE_KEY || '';
 const openaiApiKey = process.env.OPENAI_API_KEY || '';
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error("SUPABASE_URL or SUPABASE_KEY is missing");
+  console.warn("SUPABASE_URL or SUPABASE_KEY is missing. Using placeholder to prevent build crash.");
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Next.js 빌드 시(환경변수가 없을 때) 크래시 방지용 더미 값
+const safeSupabaseUrl = supabaseUrl || 'https://placeholder.supabase.co';
+const safeSupabaseKey = supabaseKey || 'placeholder';
+
+const supabase = createClient(safeSupabaseUrl, safeSupabaseKey);
 
 // Vercel Serverless Edge Runtime 도 지원 가능하지만, Supabase 등을 위해 nodejs 런타임을 유지
 export const runtime = 'nodejs';
