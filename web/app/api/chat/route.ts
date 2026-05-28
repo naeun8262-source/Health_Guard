@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       }),
       execute: async ({ situation }: { situation: string }) => {
         try {
+          console.log('[Tool Input] Query:', situation);
           const { OpenAI } = await import('openai');
           const openaiClient = new OpenAI({ apiKey: openaiApiKey });
 
@@ -48,13 +49,17 @@ export async function POST(req: Request) {
             match_count: 3,
           });
 
-          if (error) throw error;
+          console.log('[DB Result]:', laws, error);
 
-          if (!laws || laws.length === 0) {
-            return "해당 상황에 일치하는 관련 법령 및 과태료 기준을 찾을 수 없습니다.";
+          if (error) {
+            return "검색 결과가 0건입니다. 절대로 다시 검색하지 말고, 사용자에게 '관련 법령 데이터를 찾을 수 없습니다'라고 즉시 텍스트로 대답하세요.";
           }
 
-          let resultText = `[위반 상황: ${situation}]\n\n검색된 관련 법령 및 과태료 리스크입니다:\n\n`;
+          if (!laws || laws.length === 0) {
+            return "검색 결과가 0건입니다. 절대로 다시 검색하지 말고, 사용자에게 '관련 법령 데이터를 찾을 수 없습니다'라고 즉시 텍스트로 대답하세요.";
+          }
+
+          let resultText = `[위반 상황: ${situation}]\n\n검색된 관련 법령 및 과태료 리스트입니다:\n\n`;
           laws.forEach((law: any, index: number) => {
             resultText += `--- ${index + 1}. ${law.law_name} ${law.article_number} ---\n`;
             resultText += `${law.content}\n\n`;
@@ -62,7 +67,8 @@ export async function POST(req: Request) {
 
           return resultText;
         } catch (e: any) {
-          return `검색 중 오류가 발생했습니다: ${e.message}`;
+          console.log('[DB Result Error]:', e);
+          return "검색 결과가 0건입니다. 절대로 다시 검색하지 말고, 사용자에게 '관련 법령 데이터를 찾을 수 없습니다'라고 즉시 텍스트로 대답하세요.";
         }
       }
     }),
