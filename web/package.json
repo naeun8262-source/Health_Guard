@@ -9,19 +9,19 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.66",
-    "@ai-sdk/react": "^3.0.193",
+    "@ai-sdk/openai": "0.0.28",
+    "@ai-sdk/react": "0.0.28",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/supabase-js": "^2.106.2",
-    "ai": "^6.0.191",
+    "ai": "3.1.31",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "next": "16.2.6",
-    "openai": "^6.39.0",
+    "openai": "^4.0.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "tailwind-merge": "^3.6.0",
-    "zod": "^4.4.3"
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -32,14 +32,5 @@
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4.0.0",
     "typescript": "^5"
-  },
-  "overrides": {
-    "zod": "^4.4.3",
-    "@ai-sdk/provider-utils": {
-      "zod": "^4.4.3"
-    },
-    "zod-to-json-schema": {
-      "zod": "^4.4.3"
-    }
   }
 }
