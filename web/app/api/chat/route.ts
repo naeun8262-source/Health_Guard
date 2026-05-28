@@ -1,4 +1,4 @@
-import { streamText, tool, jsonSchema } from 'ai';
+import { streamText, tool } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
@@ -27,12 +27,8 @@ export async function POST(req: Request) {
   const aiTools = {
     search_safety_law: tool({
       description: "현장 위반 상황(예: '안전모 미착용')에 대한 관련 법령 및 과태료 기준을 검색합니다.",
-      parameters: jsonSchema<{ situation: string }>({
-        type: 'object',
-        properties: {
-          situation: { type: 'string', description: "현장 위반 상황에 대한 상세 설명" },
-        },
-        required: ['situation'],
+      parameters: z.object({
+        situation: z.string().describe("현장 위반 상황에 대한 상세 설명"),
       }),
       execute: async ({ situation }: { situation: string }) => {
         try {
@@ -72,14 +68,10 @@ export async function POST(req: Request) {
 
     draft_warning_letter: tool({
       description: "검색된 법령 및 리스크를 바탕으로 협력업체 소장에게 발송할 작업중지 및 과태료 경고 공문 초안을 작성합니다.",
-      parameters: jsonSchema<{ situation: string; law_results: string; company_name?: string }>({
-        type: 'object',
-        properties: {
-          situation: { type: 'string', description: "위반 상황 내용" },
-          law_results: { type: 'string', description: "검색된 법령 및 과태료 기준 내용" },
-          company_name: { type: 'string', description: "수신 협력업체 이름 (선택)" },
-        },
-        required: ['situation', 'law_results'],
+      parameters: z.object({
+        situation: z.string().describe("위반 상황 내용"),
+        law_results: z.string().describe("검색된 법령 및 과태료 기준 내용"),
+        company_name: z.string().optional().describe("수신 협력업체 이름 (선택)"),
       }),
       execute: async ({ situation, law_results, company_name }: { situation: string; law_results: string; company_name?: string }) => {
         try {
