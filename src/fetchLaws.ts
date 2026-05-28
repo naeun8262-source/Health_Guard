@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 // 환경변수 로드
 dotenv.config();
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_URL = process.env.SUPABASE_URL!.replace(/\/rest\/v1\/?$/, '');
 const SUPABASE_KEY = process.env.SUPABASE_KEY!; // Service Role Key 권장
 const LAW_API_KEY = process.env.LAW_API_KEY!;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
@@ -49,7 +49,9 @@ async function fetchLawArticles(lawName: string) {
     const searchRes = await axios.get(searchUrl);
     const searchXml = await parseStringPromise(searchRes.data);
     
-    if (!searchXml.LawSearch.law || searchXml.LawSearch.law.length === 0) {
+    console.log("DEBUG searchXml:", JSON.stringify(searchXml, null, 2));
+
+    if (!searchXml.LawSearch || !searchXml.LawSearch.law || searchXml.LawSearch.law.length === 0) {
       console.log(`❌ [${lawName}] 검색 결과가 없습니다.`);
       return;
     }
@@ -61,13 +63,35 @@ async function fetchLawArticles(lawName: string) {
     const detailRes = await axios.get(detailUrl);
     const detailXml = await parseStringPromise(detailRes.data);
 
-    const articles = detailXml.Law.조문[0].조문단위;
+    // DEBUG 추가
+    if (!detailXml.법령) {
+      console.log(`❌ [${lawName}] 상세조회 API 오류 응답:`, JSON.stringify(detailXml, null, 2));
+      return;
+    }
+    if (!detailXml.법령.조문 || detailXml.법령.조문.length === 0) {
+      console.log(`❌ [${lawName}] 조문 데이터가 없습니다:`, JSON.stringify(detailXml.법령, null, 2));
+      return;
+    }
+
+    const articles = detailXml.법령.조문[0].조문단위;
     if (!articles) return;
 
     for (const article of articles) {
       const articleNum = article.조문번호 ? article.조문번호[0] : '미상';
       const articleTitle = article.조문제목 ? article.조문제목[0] : '';
-      const articleContent = article.조문내용 ? article.조문내용[0] : '';
+      let articleContent = article.조문내용 ? article.조문내용[0] : '';
+      
+      // 하위 항, 호 내용 추출
+      if (article.항) {
+        article.항.forEach((hang: any) => {
+          if (hang.항내용) articleContent += '\n' + hang.항내용[0];
+          if (hang.호) {
+            hang.호.forEach((ho: any) => {
+              if (ho.호내용) articleContent += '\n  ' + ho.호내용[0];
+            });
+          }
+        });
+      }
       
       // 조문 내용 청킹 (텍스트 구성)
       const fullText = `[${lawName}] 제${articleNum}조(${articleTitle})\n${articleContent}`;
@@ -113,8 +137,17 @@ async function fetchPenaltyAnnex() {
     const detailRes = await axios.get(detailUrl);
     const detailXml = await parseStringPromise(detailRes.data);
 
+    if (!detailXml.법령) {
+      console.log(`❌ [${lawName} 별표] 상세조회 API 오류 응답:`, JSON.stringify(detailXml, null, 2));
+      return;
+    }
+    if (!detailXml.법령.별표 || detailXml.법령.별표.length === 0) {
+      console.log(`❌ [${lawName} 별표] 별표 데이터가 없습니다:`, JSON.stringify(detailXml.법령, null, 2));
+      return;
+    }
+
     // 별표 찾기
-    const annexes = detailXml.Law.별표[0].별표단위;
+    const annexes = detailXml.법령.별표[0].별표단위;
     if (!annexes) return;
     
     // 별표 35: 과태료의 부과기준
@@ -188,11 +221,14 @@ async function main() {
     console.log('🚀 국가법령 API 연동 및 데이터 적재(Phase 2) 스크립트 실행 시작...');
     
     // 1. 산업안전보건법 및 중대재해처벌법 본문 파싱 및 적재
-    // await fetchLawArticles('산업안전보건법');
-    // await fetchLawArticles('중대재해처벌 등에 관한 법률');
+    await fetchLawArticles('산업안전보건법');
+    await fetchLawArticles('산업안전보건법 시행령');
+    await fetchLawArticles('산업안전보건법 시행규칙');
+    await fetchLawArticles('산업안전보건기준에 관한 규칙');
+    await fetchLawArticles('중대재해 처벌 등에 관한 법률');
     
     // 2. 산업안전보건법 시행령 [별표 35] 과태료 기준 파싱 및 적재
-    // await fetchPenaltyAnnex();
+    await fetchPenaltyAnnex();
     
     console.log('\n※ 실제 실행을 원하시면 위의 주석을 해제하고 실행해주세요.');
     console.log('✅ 스크립트 실행이 완료되었습니다.');
