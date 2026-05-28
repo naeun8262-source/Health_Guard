@@ -11,17 +11,13 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 export default function Chat() {
-  const { messages: _messages, sendMessage, status, error } = useChat();
-  const messages = _messages as any[];
-  const isLoading = status !== 'ready' && status !== 'error';
-  const [input, setInput] = useState('');
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value);
-  const handleSubmit = (e: React.FormEvent) => {
+  // Custom form submission if needed, but we can just use the provided handleSubmit
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    sendMessage({ role: 'user', content: input } as any);
-    setInput('');
+    handleSubmit(e);
   };
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -123,7 +119,7 @@ export default function Chat() {
 
       {/* Input Area */}
       <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-4 pb-6">
-        <form onSubmit={handleSubmit} className="relative flex items-end gap-2 max-w-4xl mx-auto">
+        <form onSubmit={onSubmit} className="relative flex items-end gap-2 max-w-4xl mx-auto">
           <textarea
             className="w-full bg-[#F5F5F5] border-transparent text-hdc-black rounded-[24px] pl-4 pr-12 py-[14px] text-[15px] focus:outline-none focus:ring-1 focus:ring-hdc-umber focus:bg-white transition-all resize-none overflow-y-auto min-h-[52px] max-h-[120px] shadow-inner leading-relaxed"
             rows={1}
@@ -137,7 +133,7 @@ export default function Chat() {
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handleSubmit(e as any);
+                onSubmit(e as any);
               }
             }}
           />
