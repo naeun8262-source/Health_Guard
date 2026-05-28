@@ -122,7 +122,7 @@ ${company_name ? `[수신처]\n${company_name} 현장소장 귀하\n` : ""}
       maxSteps: 5,
     } as any);
 
-    return (result as any).toUIMessageStreamResponse();
+    return result.toDataStreamResponse();
   } catch (error: any) {
     console.error("Chat API error:", error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
