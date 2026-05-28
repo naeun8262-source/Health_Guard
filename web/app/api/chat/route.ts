@@ -1,4 +1,4 @@
-import { streamText, tool } from 'ai';
+import { streamText, tool, jsonSchema } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
@@ -27,16 +27,15 @@ export async function POST(req: Request) {
   const aiTools = {
     search_safety_law: tool({
       description: "현장 위반 상황(예: '안전모 미착용')에 대한 관련 법령 및 과태료 기준을 검색합니다.",
-      parameters: z.object({
-        situation: z.string().describe("현장 위반 상황에 대한 상세 설명"),
+      parameters: jsonSchema<{ situation: string }>({
+        type: 'object',
+        properties: {
+          situation: { type: 'string', description: "현장 위반 상황에 대한 상세 설명" },
+        },
+        required: ['situation'],
       }),
       execute: async ({ situation }: { situation: string }) => {
         try {
-          // 1. 임베딩 생성 (Edge/Node 환경을 위해 fetch를 직접 쓸 수도 있지만, @ai-sdk/openai 내부 객체를 쓰거나 별도로 openai client 필요)
-          // 하지만 우리는 이미 @ai-sdk/openai에서 제공하는 메서드를 사용할 수 있습니다.
-          // 편의상 기본 제공되는 OpenAI 클라이언트 대신 fetch를 활용하거나 openai package를 사용합니다.
-          // 패키지 의존성을 최소화하기 위해 글로벌 openai 인스턴스를 사용하거나 내장 메서드 활용.
-          // 여기서 우리는 이미 package.json에 `openai` 가 있으므로 임포트해서 씁니다.
           const { OpenAI } = await import('openai');
           const openaiClient = new OpenAI({ apiKey: openaiApiKey });
 
@@ -46,7 +45,6 @@ export async function POST(req: Request) {
           });
           const queryEmbedding = embeddingResponse.data[0].embedding;
 
-          // 2. Supabase 검색
           const { data: laws, error } = await supabase.rpc("match_safety_laws", {
             query_embedding: queryEmbedding,
             match_threshold: 0.5,
@@ -74,10 +72,14 @@ export async function POST(req: Request) {
 
     draft_warning_letter: tool({
       description: "검색된 법령 및 리스크를 바탕으로 협력업체 소장에게 발송할 작업중지 및 과태료 경고 공문 초안을 작성합니다.",
-      parameters: z.object({
-        situation: z.string().describe("위반 상황 내용"),
-        law_results: z.string().describe("검색된 법령 및 과태료 기준 내용"),
-        company_name: z.string().optional().describe("수신 협력업체 이름 (선택)"),
+      parameters: jsonSchema<{ situation: string; law_results: string; company_name?: string }>({
+        type: 'object',
+        properties: {
+          situation: { type: 'string', description: "위반 상황 내용" },
+          law_results: { type: 'string', description: "검색된 법령 및 과태료 기준 내용" },
+          company_name: { type: 'string', description: "수신 협력업체 이름 (선택)" },
+        },
+        required: ['situation', 'law_results'],
       }),
       execute: async ({ situation, law_results, company_name }: { situation: string; law_results: string; company_name?: string }) => {
         try {
