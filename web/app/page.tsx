@@ -11,7 +11,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 export default function Chat() {
-  const { messages: _messages, sendMessage, status } = useChat();
+  const { messages: _messages, sendMessage, status, error } = useChat();
   const messages = _messages as any[];
   const isLoading = status !== 'ready' && status !== 'error';
   const [input, setInput] = useState('');
@@ -108,6 +108,13 @@ export default function Chat() {
               <span className="w-2 h-2 rounded-full bg-hdc-umber/60 animate-bounce"></span>
               <span className="w-2 h-2 rounded-full bg-hdc-umber/60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
               <span className="w-2 h-2 rounded-full bg-hdc-umber/60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className="flex w-full justify-center">
+            <div className="bg-red-50 text-red-600 border border-red-200 rounded-[12px] px-4 py-3 text-[14px]">
+              오류가 발생했습니다: {error.message || 'API 키가 설정되지 않았거나 잘못되었습니다.'}
             </div>
           </div>
         )}
