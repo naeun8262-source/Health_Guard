@@ -35,29 +35,30 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-[100dvh] bg-hdc-ivory overflow-hidden font-sans">
       {/* Header */}
-      <header className="flex-shrink-0 bg-hdc-black text-hdc-ivory px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between shadow-md z-10 relative gap-2 sm:gap-0">
-        <div className="absolute top-0 left-0 w-full h-1 bg-hdc-umber"></div>
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between shadow-sm z-10 relative gap-3 sm:gap-0">
+        <div className="absolute top-0 left-0 w-full h-1 bg-hdc-crimson"></div>
         <div className="flex items-center gap-3 mt-1">
-          <HardHat className="w-6 h-6 text-hdc-umber" />
-          <h1 className="text-[17px] font-bold tracking-tight">HDC 현장 안전보건 도우미</h1>
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-hdc-umber/20 text-hdc-umber border border-hdc-umber/30 ml-2">
+          <HardHat className="w-6 h-6 text-hdc-crimson" />
+          <h1 className="text-[18px] font-bold tracking-tight text-hdc-black">HDC 현장 안전보건 도우미</h1>
+          <span className="inline-flex items-center px-3 py-1 rounded-md text-[12px] font-semibold bg-hdc-crimson text-white shadow-sm ml-2">
             📍 인천 갈산 1구역
           </span>
         </div>
-        <span className="text-[10px] text-hdc-gray opacity-70 uppercase tracking-widest mt-1 sm:mt-0">Visionary Life Creator</span>
+        <span className="text-[11px] font-medium text-hdc-dark-gray opacity-80 uppercase tracking-widest mt-1 sm:mt-0">Enterprise Safety System</span>
       </header>
 
       {/* Chat Area */}
-      <main className="flex-1 overflow-y-auto p-4 space-y-6">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 bg-hdc-ivory">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-hdc-dark-gray px-4">
-            <div className="w-16 h-16 bg-hdc-umber/10 rounded-full flex items-center justify-center mb-5">
-              <ShieldAlert className="w-8 h-8 text-hdc-umber" />
+            <div className="w-20 h-20 bg-white border border-gray-200 shadow-sm rounded-2xl flex items-center justify-center mb-6">
+              <ShieldAlert className="w-10 h-10 text-hdc-crimson" />
             </div>
-            <p className="text-[17px] font-semibold text-hdc-black mb-2">안전한 현장을 위한 첫 걸음</p>
-            <p className="text-[14px] text-hdc-dark-gray/80 max-w-xs leading-relaxed">
+            <p className="text-[20px] font-bold text-hdc-black mb-3">안전한 현장을 위한 스마트 모니터링</p>
+            <p className="text-[15px] text-hdc-dark-gray/80 max-w-md leading-relaxed">
               위반 상황(예: 안전모 미착용)을 입력하시면 
-              관련 법령 및 과태료 기준을 정확히 안내해 드립니다.
+              관련 법령, 세부 조항 및 과태료 기준을 
+              정확하고 신속하게 안내해 드립니다.
             </p>
           </div>
         )}
@@ -65,88 +66,61 @@ export default function Chat() {
         {messages.map(m => (
           <div key={m.id} className={cn("flex w-full", m.role === 'user' ? "justify-end" : "justify-start")}>
             <div className={cn(
-              "max-w-[90%] sm:max-w-[85%] rounded-[20px] px-5 py-4 shadow-sm",
+              "max-w-[95%] sm:max-w-[85%] rounded-[12px] px-6 py-5 shadow-sm",
               m.role === 'user' 
-                ? "bg-hdc-umber text-hdc-ivory rounded-tr-sm" 
+                ? "bg-hdc-crimson text-white rounded-tr-sm" 
                 : "bg-white text-hdc-black border border-gray-200 rounded-tl-sm"
             )}>
-              <div className="text-[15px] leading-[1.6] whitespace-pre-wrap markdown-body">
+              <div className="text-[15px] leading-[1.7] whitespace-pre-wrap markdown-body">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    table: ({node, ...props}) => <div className="overflow-x-auto my-4"><table className="w-full text-sm text-left border-collapse border border-gray-200 shadow-sm rounded-lg" {...props} /></div>,
-                    thead: ({node, ...props}) => <thead className="bg-[#F8F9FA] text-hdc-black font-semibold border-b border-gray-200" {...props} />,
-                    th: ({node, ...props}) => <th className="px-4 py-3 border border-gray-200 whitespace-nowrap" {...props} />,
-                    td: ({node, ...props}) => <td className="px-4 py-3 border border-gray-200" {...props} />,
-                    tr: ({node, ...props}) => <tr className="hover:bg-gray-50 transition-colors" {...props} />,
-                    p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                    strong: ({node, ...props}) => <strong className="font-semibold text-hdc-umber" {...props} />,
+                    table: ({node, ...props}) => <div className="overflow-x-auto my-5"><table className="w-full text-sm text-left border-collapse border border-gray-200 shadow-sm rounded-lg" {...props} /></div>,
+                    thead: ({node, ...props}) => <thead className="bg-[#F8F9FA] text-hdc-black font-bold border-b border-gray-300" {...props} />,
+                    th: ({node, ...props}) => <th className="px-5 py-4 border border-gray-200 whitespace-nowrap bg-gray-50" {...props} />,
+                    td: ({node, ...props}) => <td className="px-5 py-4 border border-gray-200 align-top" {...props} />,
+                    tr: ({node, ...props}) => <tr className="hover:bg-gray-50/50 transition-colors" {...props} />,
+                    p: ({node, ...props}) => <p className="mb-3 last:mb-0" {...props} />,
+                    strong: ({node, ...props}) => <strong className="font-bold text-hdc-crimson" {...props} />,
                   }}
                 >
                   {m.content}
                 </ReactMarkdown>
               </div>
-              
-              {/* Tool Invocations */}
-              {m.toolInvocations?.map((toolInvocation: any) => {
-                const isToolComplete = 'result' in toolInvocation;
-                
-                return (
-                  <div key={toolInvocation.toolCallId} className="mt-3 p-3 bg-[#F8F9FA] border border-gray-100 rounded-xl flex flex-col gap-2">
-                    <div className="flex items-center gap-2 text-[13px] font-medium text-hdc-black">
-                      {!isToolComplete ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-hdc-umber" />
-                      ) : (
-                        <FileText className="w-4 h-4 text-hdc-umber" />
-                      )}
-                      <span>
-                        {toolInvocation.toolName === 'search_safety_law' ? '안전 법령 데이터베이스 검색' : 
-                         toolInvocation.toolName === 'draft_warning_letter' ? '경고 공문 초안 작성' : 
-                         '도구 사용 중...'}
-                      </span>
-                    </div>
-                    {isToolComplete && (
-                      <div className="text-[12px] text-hdc-dark-gray/60 font-medium">
-                        작업이 완료되었습니다.
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           </div>
         ))}
         {isLoading && messages[messages.length - 1]?.role === 'user' && (
           <div className="flex w-full justify-start">
-            <div className="bg-white border border-gray-200 rounded-[20px] rounded-tl-sm px-5 py-4 shadow-sm flex gap-2 items-center">
-              <span className="w-2 h-2 rounded-full bg-hdc-umber/60 animate-bounce"></span>
-              <span className="w-2 h-2 rounded-full bg-hdc-umber/60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-              <span className="w-2 h-2 rounded-full bg-hdc-umber/60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+            <div className="bg-white border border-gray-200 rounded-[12px] rounded-tl-sm px-6 py-5 shadow-sm flex gap-2 items-center">
+              <span className="w-2.5 h-2.5 rounded-full bg-hdc-crimson/70 animate-bounce"></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-hdc-crimson/70 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+              <span className="w-2.5 h-2.5 rounded-full bg-hdc-crimson/70 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
             </div>
           </div>
         )}
         {error && (
-          <div className="flex w-full justify-center">
-            <div className="bg-red-50 text-red-600 border border-red-200 rounded-[12px] px-4 py-3 text-[14px]">
-              오류가 발생했습니다: {error.message || 'API 키가 설정되지 않았거나 잘못되었습니다.'}
+          <div className="flex w-full justify-center mt-4">
+            <div className="bg-red-50 text-red-600 border border-red-200 rounded-[8px] px-5 py-3 text-[14px] font-medium shadow-sm">
+              오류가 발생했습니다: {error.message || '시스템 통신 중 문제가 발생했습니다.'}
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} className="h-1" />
+        <div ref={messagesEndRef} className="h-4" />
       </main>
 
       {/* Input Area */}
-      <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-4 pb-6">
-        <form onSubmit={onSubmit} className="relative flex items-end gap-2 max-w-4xl mx-auto">
+      <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-4 sm:p-6">
+        <form onSubmit={onSubmit} className="relative flex items-end gap-3 max-w-5xl mx-auto">
           <textarea
-            className="w-full bg-[#F5F5F5] border-transparent text-hdc-black rounded-[24px] pl-4 pr-12 py-[14px] text-[15px] focus:outline-none focus:ring-1 focus:ring-hdc-umber focus:bg-white transition-all resize-none overflow-y-auto min-h-[52px] max-h-[120px] shadow-inner leading-relaxed"
+            className="w-full bg-[#F9FAFB] border border-gray-300 text-hdc-black rounded-[8px] pl-5 pr-14 py-[16px] text-[15px] focus:outline-none focus:ring-2 focus:ring-hdc-crimson/50 focus:border-hdc-crimson transition-all resize-none overflow-y-auto min-h-[56px] max-h-[150px] shadow-sm leading-relaxed"
             rows={1}
             value={input}
-            placeholder="상황을 입력하세요..."
+            placeholder="현장 위반 상황을 구체적으로 입력해 주십시오..."
             onChange={(e) => {
               handleInputChange(e);
               e.target.style.height = 'auto';
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+              e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
@@ -158,7 +132,7 @@ export default function Chat() {
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="absolute right-[6px] bottom-[6px] w-[40px] h-[40px] flex items-center justify-center bg-hdc-black text-white rounded-full hover:bg-hdc-umber disabled:opacity-50 disabled:bg-hdc-dark-gray disabled:cursor-not-allowed transition-colors shadow-md"
+            className="absolute right-[8px] bottom-[8px] w-[42px] h-[42px] flex items-center justify-center bg-hdc-crimson text-white rounded-[6px] hover:bg-[#7A0000] disabled:opacity-50 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             <Send className="w-4 h-4 ml-[-2px] mt-[2px]" />
           </button>
