@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
-import { streamText, tool } from 'ai';
+import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 
 // Vercel 환경에서 환경변수 로드
@@ -13,124 +12,71 @@ if (!supabaseUrl || !supabaseKey) {
   console.warn("SUPABASE_URL or SUPABASE_KEY is missing. Using placeholder to prevent build crash.");
 }
 
-// Next.js 빌드 시(환경변수가 없을 때) 크래시 방지용 더미 값
+// Next.js 빌드 중 환경변수가 없을 때 아래의 방어코드가 작동
 const safeSupabaseUrl = supabaseUrl || 'https://placeholder.supabase.co';
 const safeSupabaseKey = supabaseKey || 'placeholder';
 
 const supabase = createClient(safeSupabaseUrl, safeSupabaseKey);
 
-// Vercel Serverless Edge Runtime 도 지원 가능하지만, Supabase 등을 위해 nodejs 런타임을 유지
+// Vercel Serverless Edge Runtime은 지원 가능하지만 Supabase 등을 위해 nodejs 런타임을 유지
 export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const aiTools = {
-    search_safety_law: tool({
-      description: "현장 위반 상황(예: '안전모 미착용')에 대한 관련 법령 및 과태료 기준을 검색합니다.",
-      parameters: z.object({
-        situation: z.string().describe("현장 위반 상황에 대한 상세 설명"),
-      }),
-      execute: async ({ situation }: { situation: string }) => {
-        try {
-          console.log('[Tool Input] Query:', situation);
-          const { OpenAI } = await import('openai');
-          const openaiClient = new OpenAI({ apiKey: openaiApiKey });
-
-          const embeddingResponse = await openaiClient.embeddings.create({
-            model: "text-embedding-3-small",
-            input: situation,
-          });
-          const queryEmbedding = embeddingResponse.data[0].embedding;
-
-          const { data: laws, error } = await supabase.rpc("match_safety_laws", {
-            query_embedding: queryEmbedding,
-            match_threshold: 0.5,
-            match_count: 3,
-          });
-
-          console.log('[DB Result]:', laws, error);
-
-          if (error) {
-            return "검색 결과가 0건입니다. 절대로 다시 검색하지 말고, 사용자에게 '관련 법령 데이터를 찾을 수 없습니다'라고 즉시 텍스트로 대답하세요.";
-          }
-
-          if (!laws || laws.length === 0) {
-            return "검색 결과가 0건입니다. 절대로 다시 검색하지 말고, 사용자에게 '관련 법령 데이터를 찾을 수 없습니다'라고 즉시 텍스트로 대답하세요.";
-          }
-
-          let resultText = `[위반 상황: ${situation}]\n\n검색된 관련 법령 및 과태료 리스트입니다:\n\n`;
-          laws.forEach((law: any, index: number) => {
-            resultText += `--- ${index + 1}. ${law.law_name} ${law.article_number} ---\n`;
-            resultText += `${law.content}\n\n`;
-          });
-
-          return resultText;
-        } catch (e: any) {
-          console.log('[DB Result Error]:', e);
-          return "검색 결과가 0건입니다. 절대로 다시 검색하지 말고, 사용자에게 '관련 법령 데이터를 찾을 수 없습니다'라고 즉시 텍스트로 대답하세요.";
-        }
-      }
-    }),
-
-    draft_warning_letter: tool({
-      description: "검색된 법령 및 리스크를 바탕으로 협력업체 소장에게 발송할 작업중지 및 과태료 경고 공문 초안을 작성합니다.",
-      parameters: z.object({
-        situation: z.string().describe("위반 상황 내용"),
-        law_results: z.string().describe("검색된 법령 및 과태료 기준 내용"),
-        company_name: z.string().optional().describe("수신 협력업체 이름 (선택)"),
-      }),
-      execute: async ({ situation, law_results, company_name }: { situation: string; law_results: string; company_name?: string }) => {
-        try {
-          const { OpenAI } = await import('openai');
-          const openaiClient = new OpenAI({ apiKey: openaiApiKey });
-
-          const prompt = `당신은 건설현장의 최고 안전 책임자입니다.
-다음의 위반 상황과 관련 법령 리스크를 바탕으로, 협력업체 현장소장에게 발송할 강력하고 전문적인 [작업중지 및 과태료 경고 공문] 초안을 작성해주세요.
-
-[위반 상황]
-${situation}
-
-[관련 법령 및 리스크]
-${law_results}
-
-${company_name ? `[수신처]\n${company_name} 현장소장 귀하\n` : ""}
-[요구사항]
-1. 공문의 형식을 갖출 것 (제목, 수신, 발신, 본문, 결론).
-2. 위반 행위로 인해 발생할 수 있는 법적 리스크(과태료 등)를 명확히 경고할 것.
-3. 즉각적인 시정 조치 및 재발 방지 대책 제출을 요구할 것.
-4. 필요시 작업중지 조치가 포함됨을 명시할 것.
-5. 매우 단호하고 전문적인 어조를 사용할 것.`;
-
-          const completion = await openaiClient.chat.completions.create({
-            model: "gpt-4o-mini",
-            messages: [{ role: "user", content: prompt }],
-            temperature: 0.7,
-          });
-
-          return completion.choices[0]?.message?.content || "초안 작성에 실패했습니다.";
-        } catch (e: any) {
-          return `공문 초안 작성 중 오류가 발생했습니다: ${e.message}`;
-        }
-      }
-    }),
-  };
-
   try {
-    const result = await streamText({
-      model: openai('gpt-4o-mini'),
-      system: `당신은 HDC 현대산업개발의 현장 안전을 책임지는 최고 안전 책임자 AI입니다. 
+    const lastMessage = messages[messages.length - 1];
+    const userQuery = lastMessage.content;
+
+    console.log('[RAG] User Query:', userQuery);
+
+    const { OpenAI } = await import('openai');
+    const openaiClient = new OpenAI({ apiKey: openaiApiKey });
+
+    // 1. 사용자 질문으로 임베딩 생성
+    const embeddingResponse = await openaiClient.embeddings.create({
+      model: "text-embedding-3-small",
+      input: userQuery,
+    });
+    const queryEmbedding = embeddingResponse.data[0].embedding;
+
+    // 2. Supabase DB에서 유사 법령 검색
+    const { data: laws, error } = await supabase.rpc("match_safety_laws", {
+      query_embedding: queryEmbedding,
+      match_threshold: 0.5,
+      match_count: 3,
+    });
+
+    console.log('[RAG DB Result]:', laws, error);
+
+    // 3. 검색 결과 텍스트 구성
+    let dbResultText = "";
+    if (error || !laws || laws.length === 0) {
+      dbResultText = "관련 법령 데이터를 찾을 수 없습니다.";
+    } else {
+      dbResultText = "검색된 관련 법령 및 과태료 리스트입니다:\n\n";
+      laws.forEach((law: any, index: number) => {
+        dbResultText += `--- ${index + 1}. ${law.law_name} ${law.article_number} ---\n`;
+        dbResultText += `${law.content}\n\n`;
+      });
+    }
+
+    // 4. 동적 시스템 프롬프트 생성 (RAG 주입)
+    const dynamicSystemPrompt = `당신은 HDC 현대산업개발의 현장 안전을 책임지는 최고 안전 책임자 AI입니다. 
 항상 프로페셔널하고 단호하며, 가독성 높고 정중한 말투를 사용하십시오.
 
-[중요 지침 - 도구 사용 규칙]
-1. 사용자의 질문(위반 상황)이 들어오면 search_safety_law 도구를 단 한 번만(EXACTLY ONCE) 호출하십시오.
-2. 도구 실행 결과를 반환받으면, 절대 도구를 재호출하지 말고 즉시 그 결과를 바탕으로 사용자에게 마크다운 텍스트 답변을 출력하십시오.
-3. 만약 DB에서 검색된 결과가 없거나 빈 문자열이 반환되더라도, 절대 다시 검색하지 말고 "해당하는 법령 검색 결과가 없습니다"라고 텍스트로 대답하십시오.
-4. 도구의 내용은 표나 목록을 사용하여 결과를 깔끔하게 정리하여 보여주세요.`,
+다음 법령 데이터를 참고하여 사용자의 현장 위반 상황에 대해 정확한 법적 기준을 안내하고, 필요한 경우 작업중지 및 과태료 경고 공문 초안을 작성해주세요.
+데이터가 없을 경우 "해당하는 법령 검색 결과가 없습니다"라고 대답하십시오.
+내용은 표나 목록을 사용하여 깔끔하게 정리하여 보여주세요.
+
+[관련 법령 데이터]
+${dbResultText}`;
+
+    // 5. LLM 스트림 생성 (tools 제거됨)
+    const result = await streamText({
+      model: openai('gpt-4o-mini'),
+      system: dynamicSystemPrompt,
       messages,
-      tools: aiTools,
-      maxSteps: 5,
-      maxToolRoundtrips: 5,
     } as any);
 
     return result.toAIStreamResponse();

@@ -11,7 +11,7 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 }
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat({ maxToolRoundtrips: 5 });
+  const { messages, input, handleInputChange, handleSubmit, isLoading, error } = useChat();
 
   // Custom form submission if needed, but we can just use the provided handleSubmit
   const onSubmit = (e: React.FormEvent) => {
