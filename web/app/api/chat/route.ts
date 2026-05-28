@@ -43,8 +43,8 @@ export async function POST(req: Request) {
     // 2. Supabase DB에서 유사 법령 검색
     const { data: laws, error } = await supabase.rpc("match_safety_laws", {
       query_embedding: queryEmbedding,
-      match_threshold: 0.5,
-      match_count: 3,
+      match_threshold: 0.3,
+      match_count: 5,
     });
 
     console.log('[RAG DB Result]:', laws, error);
