@@ -6,6 +6,9 @@ import { useEffect, useRef, useState } from 'react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
@@ -32,13 +35,16 @@ export default function Chat() {
   return (
     <div className="flex flex-col h-[100dvh] bg-hdc-ivory overflow-hidden font-sans">
       {/* Header */}
-      <header className="flex-shrink-0 bg-hdc-black text-hdc-ivory px-4 py-4 flex items-center justify-between shadow-md z-10 relative">
+      <header className="flex-shrink-0 bg-hdc-black text-hdc-ivory px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between shadow-md z-10 relative gap-2 sm:gap-0">
         <div className="absolute top-0 left-0 w-full h-1 bg-hdc-umber"></div>
         <div className="flex items-center gap-3 mt-1">
           <HardHat className="w-6 h-6 text-hdc-umber" />
-          <h1 className="text-[17px] font-bold tracking-tight">HDC 현장 안전 도우미</h1>
+          <h1 className="text-[17px] font-bold tracking-tight">HDC 현장 안전보건 도우미</h1>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-hdc-umber/20 text-hdc-umber border border-hdc-umber/30 ml-2">
+            📍 인천 갈산 1구역
+          </span>
         </div>
-        <span className="text-[10px] text-hdc-gray opacity-70 uppercase tracking-widest mt-1">Visionary Life Creator</span>
+        <span className="text-[10px] text-hdc-gray opacity-70 uppercase tracking-widest mt-1 sm:mt-0">Visionary Life Creator</span>
       </header>
 
       {/* Chat Area */}
@@ -51,8 +57,7 @@ export default function Chat() {
             <p className="text-[17px] font-semibold text-hdc-black mb-2">안전한 현장을 위한 첫 걸음</p>
             <p className="text-[14px] text-hdc-dark-gray/80 max-w-xs leading-relaxed">
               위반 상황(예: 안전모 미착용)을 입력하시면 
-              관련 법령 및 과태료 기준을 안내하고,
-              협력사 경고 공문 초안을 작성해 드립니다.
+              관련 법령 및 과태료 기준을 정확히 안내해 드립니다.
             </p>
           </div>
         )}
@@ -60,13 +65,26 @@ export default function Chat() {
         {messages.map(m => (
           <div key={m.id} className={cn("flex w-full", m.role === 'user' ? "justify-end" : "justify-start")}>
             <div className={cn(
-              "max-w-[85%] sm:max-w-[75%] rounded-[20px] px-4 py-3 shadow-sm",
+              "max-w-[90%] sm:max-w-[85%] rounded-[20px] px-5 py-4 shadow-sm",
               m.role === 'user' 
                 ? "bg-hdc-umber text-hdc-ivory rounded-tr-sm" 
                 : "bg-white text-hdc-black border border-gray-200 rounded-tl-sm"
             )}>
-              <div className="text-[15px] leading-[1.6] whitespace-pre-wrap">
-                {m.content}
+              <div className="text-[15px] leading-[1.6] whitespace-pre-wrap markdown-body">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table: ({node, ...props}) => <div className="overflow-x-auto my-4"><table className="w-full text-sm text-left border-collapse border border-gray-200 shadow-sm rounded-lg" {...props} /></div>,
+                    thead: ({node, ...props}) => <thead className="bg-[#F8F9FA] text-hdc-black font-semibold border-b border-gray-200" {...props} />,
+                    th: ({node, ...props}) => <th className="px-4 py-3 border border-gray-200 whitespace-nowrap" {...props} />,
+                    td: ({node, ...props}) => <td className="px-4 py-3 border border-gray-200" {...props} />,
+                    tr: ({node, ...props}) => <tr className="hover:bg-gray-50 transition-colors" {...props} />,
+                    p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                    strong: ({node, ...props}) => <strong className="font-semibold text-hdc-umber" {...props} />,
+                  }}
+                >
+                  {m.content}
+                </ReactMarkdown>
               </div>
               
               {/* Tool Invocations */}
