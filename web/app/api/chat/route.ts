@@ -120,6 +120,7 @@ ${company_name ? `[수신처]\n${company_name} 현장소장 귀하\n` : ""}
       messages,
       tools: aiTools,
       maxSteps: 5,
+      maxToolRoundtrips: 5,
     } as any);
 
     return result.toAIStreamResponse();
