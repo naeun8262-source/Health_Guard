@@ -21,6 +21,45 @@ const supabase = createClient(safeSupabaseUrl, safeSupabaseKey);
 // Vercel Serverless Edge Runtime 도 지원 가능하지만, Supabase 등을 위해 nodejs 런타임을 유지
 export const runtime = 'nodejs';
 
+const originalFetch = global.fetch;
+global.fetch = async (...args: any[]) => {
+  const [url, options] = args;
+  if (url === 'https://api.openai.com/v1/chat/completions' && options?.body) {
+    try {
+      const bodyStr = options.body.toString();
+      const bodyObj = JSON.parse(bodyStr);
+      if (bodyObj.tools) {
+        bodyObj.tools.forEach((toolItem: any) => {
+          if (toolItem.type === 'function' && toolItem.function.name === 'search_safety_law') {
+            toolItem.function.parameters = {
+              type: 'object',
+              properties: { situation: { type: 'string', description: "현장 위반 상황에 대한 상세 설명" } },
+              required: ['situation'],
+              additionalProperties: false
+            };
+          }
+          if (toolItem.type === 'function' && toolItem.function.name === 'draft_warning_letter') {
+            toolItem.function.parameters = {
+              type: 'object',
+              properties: {
+                situation: { type: 'string', description: "위반 상황 내용" },
+                law_results: { type: 'string', description: "검색된 법령 및 과태료 기준 내용" },
+                company_name: { type: 'string', description: "수신 협력업체 이름 (선택)" }
+              },
+              required: ['situation', 'law_results'],
+              additionalProperties: false
+            };
+          }
+        });
+        options.body = JSON.stringify(bodyObj);
+      }
+    } catch (e) {
+      console.error("Failed to patch OpenAI request", e);
+    }
+  }
+  return originalFetch(url, options);
+};
+
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
